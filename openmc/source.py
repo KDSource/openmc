@@ -4,6 +4,7 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 import h5py
+import pandas as pd
 
 import openmc.checkvalue as cv
 from openmc.stats.multivariate import UnitSphere, Spatial
@@ -324,3 +325,61 @@ def write_source_file(source_particles, filename, **kwargs):
     with h5py.File(filename, **kwargs) as fh:
         fh.attrs['filetype'] = np.string_("source")
         fh.create_dataset('source_bank', data=arr, dtype=source_dtype)
+
+def h5_to_ssv(input_file, output_file, **kwargs):
+    """ Transform a .h5 source file into .ssv format using MCPL format
+
+    Parameters
+    ----------
+    input_file: str of path-like
+        Path to original source file
+    output_file: str or path-like
+        Path to`source file to write
+    """
+
+    ### Read the .h5 file
+    kwargs.setdefault('mode', 'r')
+    with h5py.File(input_file, **kwargs) as fh:
+        df = pd.DataFrame(columns=['id','type','E','x','y','z','u','v','w','t', 'wgt','px','py','pz','userflags'])
+    
+        ### Change from OpenMC int type to MCPL PDG code
+        df['type'] = fh['source_bank']['particle']
+        df.loc[df['type']==0, 'type'] = 2112   # neutron
+        df.loc[df['type']==1, 'type'] = 22     # photon
+        df.loc[df['type']==2, 'type'] = None   # electron
+        df.loc[df['type']==3, 'type'] = None   # positron
+        df = df[df['type']!=None]
+
+        df['id'] = df.index
+
+        df['E'] = fh['source_bank']['E']*1e-6
+
+        df['x'] = fh['source_bank']['r']['x']
+        df['y'] = fh['source_bank']['r']['y']
+        df['z'] = fh['source_bank']['r']['z']
+
+        df['u'] = fh['source_bank']['u']['x']
+        df['v'] = fh['source_bank']['u']['y']
+        df['w'] = fh['source_bank']['u']['z']
+
+        df['u'], df['v'], df['w'] = df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5, df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5, df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5
+
+        df['t'] = 0.0    
+
+        df['wgt'] = fh['source_bank']['wgt']
+
+        df['px'] = 0.0
+        df['py'] = 0.0
+        df['pz'] = 0.0
+
+        df['userflags'] = '0x00000000'
+
+        ### Write the .ssv file
+        with open(output_file,'w') as fo:
+            fo.write('#MCPL-ASCII\n')
+            fo.write('#GENERATED FROM OPENMC\n')
+            fo.write('#NPARTICLES: {:d}\n'.format(len(df)))
+            fo.write('#END-HEADER\n')
+            fo.write('index\tpdgcode\tekin[MeV]\tx[cm]\ty[cm]\tz[cm]\tux\tuy\tuz\ttime[ms]\tweight\tpol-x\tpol-y\tpol-z\tuserflags\n')        
+            for i,s in enumerate(df.values):
+                fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))     
