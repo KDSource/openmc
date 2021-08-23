@@ -326,7 +326,7 @@ def write_source_file(source_particles, filename, **kwargs):
         fh.attrs['filetype'] = np.string_("source")
         fh.create_dataset('source_bank', data=arr, dtype=source_dtype)
 
-def h5_to_ssv(input_file, output_file, **kwargs):
+def h5_to_ssv(input_file, output_file, output_range={}, **kwargs):
     """ Transform a .h5 source file into .ssv format using MCPL format
 
     Parameters
@@ -335,6 +335,10 @@ def h5_to_ssv(input_file, output_file, **kwargs):
         Path to original source file
     output_file: str or path-like
         Path to`source file to write
+    output_range: dict
+        Range of the variables
+        It must be defined like {'var':[var_min, var_max]}
+        List of possible variables: type, E, x, y, z, u, v, w, wgt
     """
 
     ### Read the .h5 file
@@ -373,6 +377,13 @@ def h5_to_ssv(input_file, output_file, **kwargs):
         df['pz'] = 0.0
 
         df['userflags'] = '0x00000000'
+
+        ### Check and set the ranges of the variables
+        for pvar, (pmin, pmax) in output_range.items():
+            if pmin != None:
+                df=df[df[pvar]>=pmin]
+            if pmax != None:
+                df=df[df[pvar]<=pmax]
 
         ### Write the .ssv file
         with open(output_file,'w') as fo:
