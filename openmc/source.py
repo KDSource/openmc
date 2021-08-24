@@ -1,4 +1,5 @@
 from enum import Enum
+from math import cos, sin, pi
 from numbers import Real
 from xml.etree import ElementTree as ET
 
@@ -326,7 +327,8 @@ def write_source_file(source_particles, filename, **kwargs):
         fh.attrs['filetype'] = np.string_("source")
         fh.create_dataset('source_bank', data=arr, dtype=source_dtype)
 
-def h5_to_ssv(input_file, output_file, output_range={}, **kwargs):
+def h5_to_ssv(input_file, output_file, output_range={},
+              translation = None, rotation = None, **kwargs):
     """ Transform a .h5 source file into .ssv format using MCPL format
 
     Parameters
@@ -339,6 +341,11 @@ def h5_to_ssv(input_file, output_file, output_range={}, **kwargs):
         Range of the variables
         It must be defined like {'var':[var_min, var_max]}
         List of possible variables: type, E, x, y, z, u, v, w, wgt
+    translation: list
+        Translation for the position variables
+    rotation:
+        Rotation for the position and direction variables
+
     """
 
     ### Read the .h5 file
@@ -366,7 +373,25 @@ def h5_to_ssv(input_file, output_file, output_range={}, **kwargs):
         df['v'] = fh['source_bank']['u']['y']
         df['w'] = fh['source_bank']['u']['z']
 
-        df['u'], df['v'], df['w'] = df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5, df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5, df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5
+        if translation != None:
+            df['x'] += translation[0]
+            df['y'] += translation[1]
+            df['z'] += translation[2]
+
+        if rotation != None:
+            phi, theta, psi = np.array(rotation)*(pi/180.)
+            c3, s3 = cos(phi), sin(phi)
+            c2, s2 = cos(theta), sin(theta)
+            c1, s1 = cos(psi), sin(psi)
+            rotation_matrix = np.array([[c1*c2, c1*s2*s3 - c3*s1, s1*s3 + c1*c3*s2],
+                                        [c2*s1, c1*c3 + s1*s2*s3, c3*s1*s2 - c1*s3],
+                                        [-s2, c2*s3, c2*c3]])
+            df['x'], df['y'], df['z'] = np.dot(rotation_matrix, np.array([df['x'], df['y'], df['z']]))
+            df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))            
+
+        df['u'], df['v'], df['w'] = df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
+                                    df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
+                                    df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5
 
         df['t'] = 0.0    
 
