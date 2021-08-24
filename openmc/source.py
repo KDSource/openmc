@@ -327,16 +327,14 @@ def write_source_file(source_particles, filename, **kwargs):
         fh.attrs['filetype'] = np.string_("source")
         fh.create_dataset('source_bank', data=arr, dtype=source_dtype)
 
-def h5_to_ssv(input_file, output_file, output_range={},
-              translation = None, rotation = None, **kwargs):
-    """ Transform a .h5 source file into .ssv format using MCPL format
+def read_source_file(input_file, output_range = {},
+                     translation = None, rotation = None):
+    """ Read a .h5 source file and return a DataFrame in MCPL format
 
     Parameters
     ----------
     input_file: str of path-like
         Path to original source file
-    output_file: str or path-like
-        Path to`source file to write
     output_range: dict
         Range of the variables
         It must be defined like {'var':[var_min, var_max]}
@@ -410,12 +408,37 @@ def h5_to_ssv(input_file, output_file, output_range={},
             if pmax != None:
                 df=df[df[pvar]<=pmax]
 
-        ### Write the .ssv file
-        with open(output_file,'w') as fo:
-            fo.write('#MCPL-ASCII\n')
-            fo.write('#GENERATED FROM OPENMC\n')
-            fo.write('#NPARTICLES: {:d}\n'.format(len(df)))
-            fo.write('#END-HEADER\n')
-            fo.write('index\tpdgcode\tekin[MeV]\tx[cm]\ty[cm]\tz[cm]\tux\tuy\tuz\ttime[ms]\tweight\tpol-x\tpol-y\tpol-z\tuserflags\n')        
-            for i,s in enumerate(df.values):
-                fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))     
+        return df
+
+def h5_to_ssv(input_file, output_file, output_range = {},
+              translation = None, rotation = None, **kwargs):
+    """ Transform a .h5 source file into .ssv format using MCPL format
+
+    Parameters
+    ----------
+    input_file: str of path-like
+        Path to original source file
+    output_file: str or path-like
+        Path to`source file to write
+    output_range: dict
+        Range of the variables
+        It must be defined like {'var':[var_min, var_max]}
+        List of possible variables: type, E, x, y, z, u, v, w, wgt
+    translation: list
+        Translation for the position variables
+    rotation:
+        Rotation for the position and direction variables
+
+    """ 
+
+    ### Write the .ssv file
+    with open(output_file,'w') as fo:
+        ### Read the .h5 file
+        df = read_source_file(input_file, output_file, output_range, translation, rotation) 
+        fo.write('#MCPL-ASCII\n')
+        fo.write('#GENERATED FROM OPENMC\n')
+        fo.write('#NPARTICLES: {:d}\n'.format(len(df)))
+        fo.write('#END-HEADER\n')
+        fo.write('index\tpdgcode\tekin[MeV]\tx[cm]\ty[cm]\tz[cm]\tux\tuy\tuz\ttime[ms]\tweight\tpol-x\tpol-y\tpol-z\tuserflags\n')        
+        for i,s in enumerate(df.values):
+            fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))     
