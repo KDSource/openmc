@@ -328,7 +328,7 @@ def write_source_file(source_particles, filename, **kwargs):
         fh.create_dataset('source_bank', data=arr, dtype=source_dtype)
 
 def read_source_file(input_file, output_range = {},
-                     translation = None, rotation = None):
+                     translation = None, rotation = None, **kwargs):
     """ Read a .h5 source file and return a DataFrame in MCPL format
 
     Parameters
@@ -343,6 +343,8 @@ def read_source_file(input_file, output_range = {},
         Translation for the position variables
     rotation:
         Rotation for the position and direction variables
+    **kwargs
+        Keyword arguments to pass to :class:`h5py.File`
 
     """
 
@@ -428,13 +430,15 @@ def h5_to_ssv(input_file, output_file, output_range = {},
         Translation for the position variables
     rotation:
         Rotation for the position and direction variables
+    **kwargs
+        Keyword arguments to pass to :class:`h5py.File`
 
     """ 
 
     ### Write the .ssv file
     with open(output_file,'w') as fo:
         ### Read the .h5 file
-        df = read_source_file(input_file, output_file, output_range, translation, rotation) 
+        df = read_source_file(input_file, output_range, translation, rotation, **kwargs) 
         fo.write('#MCPL-ASCII\n')
         fo.write('#GENERATED FROM OPENMC\n')
         fo.write('#NPARTICLES: {:d}\n'.format(len(df)))
