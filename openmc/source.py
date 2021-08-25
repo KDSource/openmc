@@ -362,22 +362,34 @@ def read_source_file(input_file, output_range = {},
         df = df[df['type']!=None]
 
         df['id'] = df.index
-
         df['E'] = fh['source_bank']['E']*1e-6
-
         df['x'] = fh['source_bank']['r']['x']
         df['y'] = fh['source_bank']['r']['y']
         df['z'] = fh['source_bank']['r']['z']
-
         df['u'] = fh['source_bank']['u']['x']
         df['v'] = fh['source_bank']['u']['y']
         df['w'] = fh['source_bank']['u']['z']
+        df['wgt'] = fh['source_bank']['wgt']
+        df['t'] = 0.0
+        df['px'] = 0.0
+        df['py'] = 0.0
+        df['pz'] = 0.0
+        df['userflags'] = '0x00000000'
 
+        ### Check and set the ranges of the variables
+        for pvar, (pmin, pmax) in output_range.items():
+            if pmin != None:
+                df=df[df[pvar]>=pmin]
+            if pmax != None:
+                df=df[df[pvar]<=pmax]        
+
+        ### Execute the translation of the position variables
         if translation != None:
             df['x'] += translation[0]
             df['y'] += translation[1]
             df['z'] += translation[2]
 
+        ### Execute the rotation of the position and direction variables
         if rotation != None:
             phi, theta, psi = np.array(rotation)*(pi/180.)
             c3, s3 = cos(phi), sin(phi)
@@ -389,26 +401,10 @@ def read_source_file(input_file, output_range = {},
             df['x'], df['y'], df['z'] = np.dot(rotation_matrix, np.array([df['x'], df['y'], df['z']]))
             df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))            
 
+        ### Normalize the direction vector
         df['u'], df['v'], df['w'] = (df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
                                      df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
                                      df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5)
-
-        df['t'] = 0.0    
-
-        df['wgt'] = fh['source_bank']['wgt']
-
-        df['px'] = 0.0
-        df['py'] = 0.0
-        df['pz'] = 0.0
-
-        df['userflags'] = '0x00000000'
-
-        ### Check and set the ranges of the variables
-        for pvar, (pmin, pmax) in output_range.items():
-            if pmin != None:
-                df=df[df[pvar]>=pmin]
-            if pmax != None:
-                df=df[df[pvar]<=pmax]
 
         return df
 
