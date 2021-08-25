@@ -327,7 +327,7 @@ def write_source_file(source_particles, filename, **kwargs):
         fh.attrs['filetype'] = np.string_("source")
         fh.create_dataset('source_bank', data=arr, dtype=source_dtype)
 
-def read_source_file(input_file, output_range = {},
+def read_source_file(input_file, output_range = {}, set_range_first = True,
                      translation = None, rotation = None, **kwargs):
     """ Read a .h5 source file and return a DataFrame in MCPL format
 
@@ -376,12 +376,13 @@ def read_source_file(input_file, output_range = {},
         df['pz'] = 0.0
         df['userflags'] = '0x00000000'
 
-        ### Check and set the ranges of the variables
-        for pvar, (pmin, pmax) in output_range.items():
-            if pmin != None:
-                df=df[df[pvar]>=pmin]
-            if pmax != None:
-                df=df[df[pvar]<=pmax]        
+        ### Check and set the ranges of the variables BEFORE the translation and rotation of the variables
+        if set_range_first == True:
+            for pvar, (pmin, pmax) in output_range.items():
+                if pmin != None:
+                    df=df[df[pvar]>=pmin]
+                if pmax != None:
+                    df=df[df[pvar]<=pmax]        
 
         ### Execute the translation of the position variables
         if translation != None:
@@ -399,7 +400,15 @@ def read_source_file(input_file, output_range = {},
                                         [c2*s1, c1*c3 + s1*s2*s3, c3*s1*s2 - c1*s3],
                                         [-s2, c2*s3, c2*c3]])
             df['x'], df['y'], df['z'] = np.dot(rotation_matrix, np.array([df['x'], df['y'], df['z']]))
-            df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))            
+            df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))
+
+        ### Check and set the ranges of the variables AFTER the translation and rotation of the variables
+        if set_range_first == False:
+            for pvar, (pmin, pmax) in output_range.items():
+                if pmin != None:
+                    df=df[df[pvar]>=pmin]
+                if pmax != None:
+                    df=df[df[pvar]<=pmax]            
 
         ### Normalize the direction vector
         df['u'], df['v'], df['w'] = (df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
@@ -408,7 +417,7 @@ def read_source_file(input_file, output_range = {},
 
         return df
 
-def h5_to_ssv(input_file, output_file, output_range = {},
+def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True,
               translation = None, rotation = None, **kwargs):
     """ Transform a .h5 source file into .ssv format using MCPL format
 
@@ -434,7 +443,7 @@ def h5_to_ssv(input_file, output_file, output_range = {},
     ### Write the .ssv file
     with open(output_file,'w') as fo:
         ### Read the .h5 file
-        df = read_source_file(input_file, output_range, translation, rotation, **kwargs) 
+        df = read_source_file(input_file, output_range, set_range_first, translation, rotation, **kwargs) 
         fo.write('#MCPL-ASCII\n')
         fo.write('#GENERATED FROM OPENMC\n')
         fo.write('#NPARTICLES: {:d}\n'.format(len(df)))
