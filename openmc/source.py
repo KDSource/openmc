@@ -389,9 +389,9 @@ def read_source_file(input_file, output_range = {},
             df['x'], df['y'], df['z'] = np.dot(rotation_matrix, np.array([df['x'], df['y'], df['z']]))
             df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))            
 
-        df['u'], df['v'], df['w'] = df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
-                                    df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
-                                    df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5
+        df['u'], df['v'], df['w'] = (df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
+                                     df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
+                                     df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5)
 
         df['t'] = 0.0    
 
