@@ -339,6 +339,8 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
         Range of the variables
         It must be defined like {'var':[var_min, var_max]}
         List of possible variables: type, E, x, y, z, u, v, w, wgt
+    set_range_first: bool
+        Define if the setting of the variables ranges must be before or after the translation and rotation
     translation: list
         Translation for the position variables
     rotation:
@@ -402,19 +404,22 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
             df['x'], df['y'], df['z'] = np.dot(rotation_matrix, np.array([df['x'], df['y'], df['z']]))
             df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))
 
-        ### Check and set the ranges of the variables AFTER the translation and rotation of the variables
-        if set_range_first == False:
-            for pvar, (pmin, pmax) in output_range.items():
-                if pmin != None:
-                    df=df[df[pvar]>=pmin]
-                if pmax != None:
-                    df=df[df[pvar]<=pmax]            
+        ### Round position and direction variables
+        df = df.round({'x': 5, 'y': 5, 'z': 5, 'u': 5, 'v': 5, 'w': 5})
 
         ### Normalize the direction vector
         df['u'], df['v'], df['w'] = (df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
                                      df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
                                      df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5)
 
+        ### Check and set the ranges of the variables AFTER the translation and rotation of the variables
+        if set_range_first == False:
+            for pvar, (pmin, pmax) in output_range.items():
+                if pmin != None:
+                    df=df[df[pvar]>=pmin]
+                if pmax != None:
+                    df=df[df[pvar]<=pmax]
+        
         return df
 
 def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True,
@@ -450,4 +455,4 @@ def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True
         fo.write('#END-HEADER\n')
         fo.write('index\tpdgcode\tekin[MeV]\tx[cm]\ty[cm]\tz[cm]\tux\tuy\tuz\ttime[ms]\tweight\tpol-x\tpol-y\tpol-z\tuserflags\n')        
         for i,s in enumerate(df.values):
-            fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))     
+            fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))
