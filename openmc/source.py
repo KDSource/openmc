@@ -420,6 +420,7 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
                 if pmax != None:
                     df=df[df[pvar]<=pmax]
         
+        df['id'] = arange(len(df))
         return df
 
 def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True,
