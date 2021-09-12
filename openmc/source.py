@@ -353,7 +353,10 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
     ### Read the .h5 file
     kwargs.setdefault('mode', 'r')
     with h5py.File(input_file, **kwargs) as fh:
+        print("Reading {:s} source file...".format(input_file))
+
         df = pd.DataFrame(columns=['id','type','E','x','y','z','u','v','w','t', 'wgt','px','py','pz','userflags'])
+        print("Number of total particles in source file: {}".format(len(df)))
     
         ### Change from OpenMC int type to MCPL PDG code
         df['type'] = fh['source_bank']['particle']
@@ -421,6 +424,7 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
                     df=df[df[pvar]<=pmax]
         
         df['id'] = np.arange(len(df))
+        print("Number of particles in DataFrame: {}".format(len(df)))
         return df
 
 def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True,
@@ -457,3 +461,5 @@ def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True
         fo.write('index\tpdgcode\tekin[MeV]\tx[cm]\ty[cm]\tz[cm]\tux\tuy\tuz\ttime[ms]\tweight\tpol-x\tpol-y\tpol-z\tuserflags\n')        
         for i,s in enumerate(df.values):
             fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))
+
+        print("Saved original {:s} source file into new {:s} source file.".format(input_file, output_file))
