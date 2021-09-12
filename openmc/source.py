@@ -356,7 +356,6 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
         print("Reading {:s} source file...".format(input_file))
 
         df = pd.DataFrame(columns=['id','type','E','x','y','z','u','v','w','t', 'wgt','px','py','pz','userflags'])
-        print("Number of total particles in source file: {}".format(len(df)))
     
         ### Change from OpenMC int type to MCPL PDG code
         df['type'] = fh['source_bank']['particle']
@@ -365,6 +364,7 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
         df.loc[df['type']==2, 'type'] = None   # electron
         df.loc[df['type']==3, 'type'] = None   # positron
         df = df[df['type']!=None]
+        print("Number of total particles in source file: {}".format(len(df)))
 
         df['id'] = df.index
         df['E'] = fh['source_bank']['E']*1e-6
