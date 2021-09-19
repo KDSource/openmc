@@ -338,9 +338,9 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
     output_range: dict
         Range of the variables
         It must be defined like {'var':[var_min, var_max]}
-        List of possible variables: type, E, x, y, z, u, v, w, wgt
+        List of possible variables: type (PDG), E (MeV), x (cm), y (cm), z (cm), u, v, w, wgt
     set_range_first: bool
-        Define if the setting of the variables ranges must be before or after the translation and rotation
+        Define if the setting of the variables ranges must be done before or after the translation and rotation
     translation: list
         Translation for the position variables
     rotation:
@@ -361,16 +361,15 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
         df['type'] = fh['source_bank']['particle']
         df.loc[df['type']==0, 'type'] = 2112   # neutron
         df.loc[df['type']==1, 'type'] = 22     # photon
-        df.loc[df['type']==2, 'type'] = None   # electron
-        df.loc[df['type']==3, 'type'] = None   # positron
-        df = df[df['type']!=None]
+        df.loc[df['type']==2, 'type'] = 11     # electron
+        df.loc[df['type']==3, 'type'] = -11    # positron
         print("Number of total particles in source file: {}".format(len(df)))
 
         df['id'] = df.index
-        df['E'] = fh['source_bank']['E']*1e-6
-        df['x'] = fh['source_bank']['r']['x']
-        df['y'] = fh['source_bank']['r']['y']
-        df['z'] = fh['source_bank']['r']['z']
+        df['E'] = fh['source_bank']['E']*1e-6  # MeV
+        df['x'] = fh['source_bank']['r']['x']  # cm
+        df['y'] = fh['source_bank']['r']['y']  # cm
+        df['z'] = fh['source_bank']['r']['z']  # cm
         df['u'] = fh['source_bank']['u']['x']
         df['v'] = fh['source_bank']['u']['y']
         df['w'] = fh['source_bank']['u']['z']
