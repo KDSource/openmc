@@ -336,9 +336,9 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
     input_file: str of path-like
         Path to original source file
     output_range: dict
-        Range of the variables
-        It must be defined like {'var':[var_min, var_max]}
-        List of possible variables: type (PDG), E (MeV), x (cm), y (cm), z (cm), u, v, w, wgt
+        Range of the variables: var_min <= 'var' <= var_max
+        It must be defined like: {'var':[var_min, var_max]}
+        List of possible variables: type [PDG], E [MeV], x [cm], y [cm], z [cm], u, v, w, wgt
     set_range_first: bool
         Define if the setting of the variables ranges must be done before or after the translation and rotation
     translation: list
@@ -347,7 +347,6 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
         Rotation for the position and direction variables
     **kwargs
         Keyword arguments to pass to :class:`h5py.File`
-
     """
 
     ### Read the .h5 file
@@ -406,13 +405,13 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
             df['x'], df['y'], df['z'] = np.dot(rotation_matrix, np.array([df['x'], df['y'], df['z']]))
             df['u'], df['v'], df['w'] = np.dot(rotation_matrix, np.array([df['u'], df['v'], df['w']]))
 
-        ### Round position and direction variables
-        df = df.round({'x': 5, 'y': 5, 'z': 5, 'u': 5, 'v': 5, 'w': 5})
-
         ### Normalize the direction vector
         df['u'], df['v'], df['w'] = (df['u']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
                                      df['v']/(df['u']**2+df['v']**2+df['w']**2)**0.5,
                                      df['w']/(df['u']**2+df['v']**2+df['w']**2)**0.5)
+
+        ### Round position and direction variables
+        # df = df.round({'x': 5, 'y': 5, 'z': 5, 'u': 5, 'v': 5, 'w': 5})
 
         ### Check and set the ranges of the variables AFTER the translation and rotation of the variables
         if set_range_first == False:
@@ -423,7 +422,7 @@ def read_source_file(input_file, output_range = {}, set_range_first = True,
                     df=df[df[pvar]<=pmax]
         
         df['id'] = np.arange(len(df))
-        print("Number of particles in DataFrame: {}".format(len(df)))
+        print("Number of particles saved into DataFrame: {}\n".format(len(df)))
         return df
 
 def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True,
@@ -435,21 +434,22 @@ def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True
     input_file: str of path-like
         Path to original source file
     output_file: str or path-like
-        Path to`source file to write
+        Path to new source file
     output_range: dict
-        Range of the variables
-        It must be defined like {'var':[var_min, var_max]}
-        List of possible variables: type, E, x, y, z, u, v, w, wgt
+        Range of the variables: var_min <= 'var' <= var_max
+        It must be defined like: {'var':[var_min, var_max]}
+        List of possible variables: type [PDG], E [MeV], x [cm], y [cm], z [cm], u, v, w, wgt
+    set_range_first: bool
+        Define if the setting of the variables ranges must be done before or after the translation and rotation
     translation: list
         Translation for the position variables
     rotation:
         Rotation for the position and direction variables
     **kwargs
         Keyword arguments to pass to :class:`h5py.File`
+    """
 
-    """ 
-
-    ### Write the .ssv file
+    ## Write the .ssv file
     with open(output_file,'w') as fo:
         ### Read the .h5 file
         df = read_source_file(input_file, output_range, set_range_first, translation, rotation, **kwargs) 
@@ -461,4 +461,22 @@ def h5_to_ssv(input_file, output_file, output_range = {}, set_range_first = True
         for i,s in enumerate(df.values):
             fo.write('{:.0f}\t{:.0f}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:.5e}\t{:s}\n'.format(*[j for j in s]))
 
-        print("Saved original {:s} source file into new {:s} source file.".format(input_file, output_file))
+        print("Saved original {:s} file into new {:s} file.".format(input_file, output_file))
+
+
+    # with open(output_file,'w') as fo:
+    #     ### Read the .h5 file
+    #     df = read_source_file(input_file, output_range, set_range_first, translation, rotation, **kwargs)
+    #     fo.write("#MCPL-ASCII\n")
+    #     fo.write("#GENERATED FROM OPENMC\n")
+    #     fo.write("#NPARTICLES: {:d}\n")
+    #     fo.write("#END-HEADER\n".format(len(df)))
+    #     fo.write("index     pdgcode               ekin[MeV]                   x[cm]          "
+    #            +"         y[cm]                   z[cm]                      ux                  "
+    #            +"    uy                      uz                time[ms]                  weight  "
+    #            +"                 pol-x                   pol-y                   pol-z  userflags\n")
+    #     fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
+    #     for i,s in enumerate(df.values):
+    #         fo.write(fmtstr%(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], int(s[14])))
+
+    #     print("Saved original {:s} source file into new {:s} source file.".format(input_file, output_file))
