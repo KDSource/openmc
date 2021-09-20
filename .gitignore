@@ -104,3 +104,6 @@ CMakeSettings.json
 
 # Python pickle files
 *.pkl
+
+# Qt creator files
+CMakeLists.txt.user
