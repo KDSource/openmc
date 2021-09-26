@@ -32,6 +32,7 @@ option(optimize "Turn on all compiler optimization flags"              OFF)
 option(coverage "Compile with coverage analysis flags"                 OFF)
 option(dagmc    "Enable support for DAGMC (CAD) geometry"              OFF)
 option(libmesh  "Enable support for libMesh unstructured mesh tallies" OFF)
+option(mcpl     "Build with MCPL library"                              ON)
 
 #===============================================================================
 # MPI for distributed-memory parallelism
@@ -260,6 +261,13 @@ target_include_directories(faddeeva
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor/faddeeva>
 )
 target_compile_options(faddeeva PRIVATE ${cxxflags})
+
+#===============================================================================
+# MCPL library
+#===============================================================================
+if (mcpl)
+  add_subdirectory(vendor/mcpl)
+endif()
 
 #===============================================================================
 # libopenmc
