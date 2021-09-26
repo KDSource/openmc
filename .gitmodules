@@ -13,3 +13,6 @@
 [submodule "vendor/fmt"]
 	path = vendor/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "vendor/mcpl"]
+	path = vendor/mcpl
+	url = https://github.com/norberto-schmidt/mcpl.git
