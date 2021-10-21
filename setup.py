@@ -67,7 +67,7 @@ kwargs = {
     'python_requires': '>=3.6',
     'install_requires': [
         'numpy>=1.9', 'h5py', 'scipy', 'ipython', 'matplotlib',
-        'pandas', 'lxml', 'uncertainties'
+        'pandas', 'lxml', 'uncertainties', 'mcpl'
     ],
     'extras_require': {
         'depletion-mpi': ['mpi4py'],
